@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://djenahalim.github.io/portfolio-ai/sitemap.xml

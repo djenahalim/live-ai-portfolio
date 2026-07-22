@@ -367,6 +367,11 @@
     _wakeServer() {
       fetch(API_BASE + "/message", { method: "GET" })
         .catch(function () { /* Silently ignore — just waking the server */ });
+
+          fetch("https://dairy-7ox8.onrender.com/", { method: "GET" })
+        .catch(function () { /* Silently ignore — just waking the server */ });
+
+        
     }
 
     /* ── Show speech bubble for 5 seconds ──────────────────────────────── */

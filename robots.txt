@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://djenahalim.github.io/live-ai-portfolio/sitemap.xml
+Sitemap: https://halim-djenaoucine.co.uk/sitemap.xml

@@ -365,13 +365,15 @@
 
     /* ── Wake up the Render API server ──────────────────────────────────── */
     _wakeServer() {
-      fetch(API_BASE + "/message", { method: "GET" })
+      /* Fire-and-forget warm-up pings.
+       * mode:"no-cors" keeps the browser from logging CORS errors for these
+       * pings (the response is never read), and we hit the API root because
+       * "/message" does not exist (it returns 404). */
+      fetch(API_BASE + "/", { method: "GET", mode: "no-cors" })
         .catch(function () { /* Silently ignore — just waking the server */ });
 
-          fetch("https://dairy-7ox8.onrender.com/", { method: "GET" })
+      fetch("https://dairy-7ox8.onrender.com/", { method: "GET", mode: "no-cors" })
         .catch(function () { /* Silently ignore — just waking the server */ });
-
-        
     }
 
     /* ── Show speech bubble for 5 seconds ──────────────────────────────── */
@@ -397,7 +399,11 @@
           return res.json();
         })
         .then(function (data) {
-          return data.response || getLocalReply(userText);
+          var reply = data && typeof data.response === "string" ? data.response.trim() : "";
+          /* The API replies with its own error string when the LLM call fails —
+           * treat that as a failure so the local knowledge base answers instead. */
+          if (!reply || /something went wrong/i.test(reply)) return getLocalReply(userText);
+          return reply;
         })
         .catch(function () {
           return getLocalReply(userText);

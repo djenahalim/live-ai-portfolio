@@ -376,14 +376,14 @@
         .catch(function () { /* Silently ignore — just waking the server */ });
     }
 
-    /* ── Show speech bubble for 5 seconds ──────────────────────────────── */
+    /* ─ Show speech bubble for 13 seconds ─────────────────────────────── */
     _showGreetingBubble() {
       if (this._open) return; /* Don't show if chat is already open */
 
       this._bubble.classList.add("show");
       this._bubbleTimer = setTimeout(() => {
         this._bubble.classList.remove("show");
-      }, 8000);
+      }, 13000);
     }
 
     /* ── Chat API call ──────────────────────────────────────────────────── */

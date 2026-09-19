@@ -16,7 +16,12 @@
    * Halim's inbox through Resend. */
   var API_BASE = "https://ai-api-61ol.onrender.com";
 
-  /* ── Shadow DOM CSS ─────────────────────────────────────────────────── */
+  /* ── Greeting speech bubble ─────────────────────────────────────────── */
+  /* Off on purpose: the chatbot bubble already greets visitors, so two
+   * bubbles at once looked cluttered. Flip to true to bring it back. */
+  var SHOW_GREETING_BUBBLE = false;
+
+  /* ─ Shadow DOM CSS ─────────────────────────────────────────────────── */
   var CSS_TEXT = "\
     :host { all: initial; display: block; }\
     :host, :host *, :host *::before, :host *::after { box-sizing: border-box; }\
@@ -387,8 +392,10 @@
         }
       });
 
-      /* Show greeting bubble after a delay (only in floating mode) */
-      if (!this.hasAttribute("inline")) {
+      /* Show greeting bubble after a delay (only in floating mode).
+       * The contact widget intentionally stays quiet — the chatbot already
+       * greets the visitor, so set SHOW_GREETING_BUBBLE to true to re-enable. */
+      if (SHOW_GREETING_BUBBLE && !this.hasAttribute("inline")) {
         setTimeout(() => {
           this._showGreetingBubble();
         }, 5000);

@@ -36,6 +36,10 @@
       a: "Halim is open to full-time, freelance, and contract roles. Head to the Contact page to reach him!",
     },
     {
+      re: /girlfriend|partner|relationship|dating|married|wife|personal.life|younie/i,
+      a: "Yes! Halim is in a happy relationship with his girlfriend, Younie. ❤️",
+    },
+    {
       re: /who.?are.?you|what.?are.?you|introduce/i,
       a: "I'm Halim's portfolio assistant. Ask me about his skills, projects, experience, or availability! 💬",
     },

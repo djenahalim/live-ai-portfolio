@@ -11,6 +11,11 @@
 (function () {
   "use strict";
 
+  /* ── API endpoint ───────────────────────────────────────────────────── */
+  /* Same Render backend as the chatbot widget — it relays the form to
+   * Halim's inbox through Resend. */
+  var API_BASE = "https://ai-api-61ol.onrender.com";
+
   /* ── Shadow DOM CSS ─────────────────────────────────────────────────── */
   var CSS_TEXT = "\
     :host { all: initial; display: block; }\
@@ -201,6 +206,16 @@
     }\
     #success-back:hover { color: #e8eaf0; border-color: rgba(255,255,255,0.25); }\
     \
+    #form-error {\
+      display: none;\
+      margin-top: 10px;\
+      font-size: 12.5px; line-height: 1.45; color: #ff9a9a;\
+      background: rgba(255,90,90,0.08);\
+      border: 1px solid rgba(255,90,90,0.22);\
+      border-radius: 9px; padding: 9px 11px;\
+    }\
+    #form-error.show { display: block; }\
+    \
     #form-wrap { display: flex; flex-direction: column; flex: 1; }\
     #form-wrap.hidden { display: none; }\
     \
@@ -313,6 +328,8 @@
             '<textarea class="field-input" id="cw-message" required rows="4" placeholder="Tell me about your project..."></textarea>' +
           "</div>" +
 
+          '<div id="form-error" role="alert"></div>' +
+
           '<button id="submit-btn" type="button">' +
             'Send message ' + SEND_SVG +
           "</button>" +
@@ -344,6 +361,7 @@
       this._message  = shadow.getElementById("cw-message");
       this._submitBtn = shadow.getElementById("submit-btn");
       this._formWrap = shadow.getElementById("form-wrap");
+      this._error    = shadow.getElementById("form-error");
       this._success  = shadow.getElementById("success");
       this._backBtn  = shadow.getElementById("success-back");
 
@@ -416,25 +434,73 @@
       this._message.style.height = this._message.scrollHeight + "px";
     }
 
+    _setError(msg) {
+      this._error.textContent = msg;
+      this._error.classList.add("show");
+    }
+
+    _clearError() {
+      this._error.textContent = "";
+      this._error.classList.remove("show");
+    }
+
     _submit() {
       const name = this._name.value.trim();
       const email = this._email.value.trim();
       const message = this._message.value.trim();
 
-      if (!name || !email || !message) return;
+      this._clearError();
+
+      if (!name || !email || !message) {
+        this._setError("Please add your name, email and a message.");
+        return;
+      }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
+        this._setError("That email address doesn't look right.");
+        return;
+      }
 
       /* Disable button to prevent double-submit */
       this._submitBtn.disabled = true;
       this._submitBtn.textContent = "Sending...";
 
-      /* Placeholder: wire to a real server function or email service when ready */
       var self = this;
-      setTimeout(function () {
-        self._formWrap.classList.add("hidden");
-        self._success.classList.add("show");
-        self._submitBtn.disabled = false;
-        self._submitBtn.innerHTML = 'Send message ' + SEND_SVG;
-      }, 600);
+
+      /* The Render instance sleeps when idle — allow time for a cold start,
+       * then fail gracefully instead of leaving the button stuck. */
+      var controller = new AbortController();
+      var timer = setTimeout(function () {
+        controller.abort();
+      }, 45000);
+
+      /* Posts to the ai-api backend, which emails the form via Resend. */
+      fetch(API_BASE + "/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: name, email: email, message: message }),
+        signal: controller.signal,
+      })
+        .then(function (res) {
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          return res.json();
+        })
+        .then(function (data) {
+          if (!data || data.ok !== true) throw new Error("Unexpected response");
+          clearTimeout(timer);
+          self._message.value = "";
+          self._formWrap.classList.add("hidden");
+          self._success.classList.add("show");
+        })
+        .catch(function () {
+          clearTimeout(timer);
+          self._setError(
+            "Sorry, your message couldn't be sent. Please try again in a moment.",
+          );
+        })
+        .then(function () {
+          self._submitBtn.disabled = false;
+          self._submitBtn.innerHTML = "Send message " + SEND_SVG;
+        });
     }
 
     _reset() {
@@ -442,6 +508,7 @@
       this._email.value = "";
       this._message.value = "";
       this._message.style.height = "auto";
+      this._clearError();
       this._success.classList.remove("show");
       this._formWrap.classList.remove("hidden");
       setTimeout(() => this._name.focus(), 50);
